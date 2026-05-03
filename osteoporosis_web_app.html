@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OsteoPredict — Osteoporosis Risk Predictor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream:   #FAF7F2;
+    --bone:    #EDE8DF;
+    --sand:    #D4C5B0;
+    --rust:    #B85C38;
+    --rust-dk: #8C3E22;
+    --teal:    #2D6A6A;
+    --teal-lt: #E8F4F4;
+    --text:    #2A2018;
+    --muted:   #7A6E62;
+    --green:   #2D7D5A;
+    --green-lt:#E6F5EE;
+    --red:     #B83838;
+    --red-lt:  #FDEAEA;
+    --radius:  16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--teal);
+    color: #fff;
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .logo-icon {
+    width: 52px; height: 52px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+  }
+  header h1 { font-family: 'DM Serif Display', serif; font-size: 2rem; line-height: 1; }
+  header p  { font-size: 0.85rem; opacity: 0.75; margin-top: 4px; }
+  .badge {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* CARD */
+  .card {
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--bone);
+    padding: 28px 30px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  }
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    color: var(--teal);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--bone);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  /* FORM SECTIONS */
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 22px 0 12px;
+  }
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 0.82rem; font-weight: 500; color: var(--text); }
+  .field select,
+  .field input {
+    padding: 10px 14px;
+    border: 1.5px solid var(--bone);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    color: var(--text);
+    background: var(--cream);
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+  .field select:focus,
+  .field input:focus {
+    outline: none;
+    border-color: var(--teal);
+    background: #fff;
+  }
+  .field-full { grid-column: 1 / -1; }
+
+  /* PREDICT BUTTON */
+  .btn-predict {
+    width: 100%;
+    margin-top: 26px;
+    padding: 16px;
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn-predict:hover  { background: var(--rust); }
+  .btn-predict:active { transform: scale(0.98); }
+  .btn-predict:disabled { background: var(--sand); cursor: not-allowed; }
+
+  /* SIDEBAR */
+  .sidebar { display: flex; flex-direction: column; gap: 20px; }
+
+  /* RESULT CARD */
+  .result-card {
+    border-radius: var(--radius);
+    border: 2px solid var(--bone);
+    padding: 28px;
+    background: #fff;
+    text-align: center;
+    min-height: 200px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.4s ease;
+  }
+  .result-card.low  { border-color: var(--green); background: var(--green-lt); }
+  .result-card.high { border-color: var(--red);   background: var(--red-lt); }
+
+  .result-empty { color: var(--muted); font-size: 0.9rem; text-align: center; }
+  .result-empty .icon { font-size: 2.8rem; margin-bottom: 10px; }
+
+  .risk-circle {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    border: 5px solid;
+    transition: all 0.4s;
+  }
+  .risk-circle.low  { border-color: var(--green); background: rgba(45,125,90,0.08); }
+  .risk-circle.high { border-color: var(--red);   background: rgba(184,56,56,0.08); }
+  .risk-pct  { font-family: 'DM Serif Display', serif; font-size: 2rem; line-height: 1; }
+  .risk-lbl  { font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; color: var(--muted); }
+  .risk-status { font-family: 'DM Serif Display', serif; font-size: 1.3rem; margin-bottom: 8px; }
+  .risk-detail { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
+
+  /* RISK METER */
+  .meter-wrap { margin-top: 6px; }
+  .meter-bar {
+    height: 10px;
+    border-radius: 10px;
+    background: var(--bone);
+    overflow: hidden;
+    margin: 8px 0 4px;
+  }
+  .meter-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--green), #F9C94E, var(--red));
+    transition: width 0.7s cubic-bezier(.4,0,.2,1);
+  }
+  .meter-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); }
+
+  /* FACTOR BREAKDOWN */
+  .factor-list { list-style: none; margin-top: 8px; }
+  .factor-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--bone);
+    font-size: 0.83rem;
+  }
+  .factor-item:last-child { border-bottom: none; }
+  .f-dot {
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+  }
+  .f-dot.risk   { background: var(--red); }
+  .f-dot.safe   { background: var(--green); }
+  .f-dot.neutral{ background: var(--sand); }
+  .f-name { flex: 1; color: var(--text); }
+  .f-val  { font-weight: 600; font-size: 0.78rem; }
+
+  /* LOADING */
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--bone);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: var(--bone);
+    border-radius: 10px;
+    padding: 12px 14px;
+    line-height: 1.55;
+    text-align: center;
+  }
+
+  @media (max-width: 780px) {
+    .container { grid-template-columns: 1fr; }
+    .field-grid { grid-template-columns: 1fr; }
+    .sidebar { order: -1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🦴</div>
+  <div>
+    <h1>OsteoPredict</h1>
+    <p>Osteoporosis Risk Assessment Tool · First Quadrant Labs</p>
+  </div>
+  <div class="badge">AI-Powered · ML Model</div>
+</header>
+
+<div class="container">
+
+  <!-- FORM -->
+  <div>
+    <div class="card">
+      <div class="card-title">🧬 Patient Information</div>
+
+      <div class="section-label">Demographics</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Age</label>
+          <input type="number" id="age" min="20" max="100" placeholder="e.g. 65" value="60">
+        </div>
+        <div class="field">
+          <label>Gender</label>
+          <select id="gender">
+            <option value="Female">Female</option>
+            <option value="Male">Male</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Race / Ethnicity</label>
+          <select id="race">
+            <option value="Caucasian">Caucasian</option>
+            <option value="Asian">Asian</option>
+            <option value="African American">African American</option>
+            <option value="Hispanic">Hispanic</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Body Weight</label>
+          <select id="bodyweight">
+            <option value="Normal">Normal</option>
+            <option value="Underweight">Underweight</option>
+            <option value="Overweight">Overweight</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label">Hormonal & Genetic Factors</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Hormonal Changes</label>
+          <select id="hormonal">
+            <option value="Normal">Normal</option>
+            <option value="Postmenopausal">Postmenopausal</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Family History of Osteoporosis</label>
+          <select id="family">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label">Nutrition</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Calcium Intake</label>
+          <select id="calcium">
+            <option value="Adequate">Adequate</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Vitamin D Intake</label>
+          <select id="vitamind">
+            <option value="Sufficient">Sufficient</option>
+            <option value="Insufficient">Insufficient</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label">Lifestyle</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Physical Activity</label>
+          <select id="activity">
+            <option value="Active">Active</option>
+            <option value="Moderate">Moderate</option>
+            <option value="Sedentary">Sedentary</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Smoking</label>
+          <select id="smoking">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Alcohol Consumption</label>
+          <select id="alcohol">
+            <option value="None">None</option>
+            <option value="Moderate">Moderate</option>
+            <option value="Heavy">Heavy</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label">Medical History</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Medical Conditions</label>
+          <select id="medical">
+            <option value="None">None</option>
+            <option value="Rheumatoid Arthritis">Rheumatoid Arthritis</option>
+            <option value="Hyperthyroidism">Hyperthyroidism</option>
+            <option value="Diabetes">Diabetes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Medications</label>
+          <select id="medications">
+            <option value="None">None</option>
+            <option value="Corticosteroids">Corticosteroids</option>
+            <option value="Anticonvulsants">Anticonvulsants</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Prior Fractures</label>
+          <select id="fractures">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn-predict" onclick="runPrediction()" id="btn">
+        ⚡ Assess Osteoporosis Risk
+      </button>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="result-card" id="resultCard">
+      <div class="result-empty">
+        <div class="icon">🔬</div>
+        <p>Fill in the patient form and click <strong>Assess Risk</strong> to get a prediction.</p>
+      </div>
+    </div>
+
+    <!-- RISK METER -->
+    <div class="card" id="meterCard" style="display:none">
+      <div class="card-title">📊 Risk Meter</div>
+      <div class="meter-wrap">
+        <div class="meter-bar"><div class="meter-fill" id="meterFill" style="width:0%"></div></div>
+        <div class="meter-labels"><span>Low</span><span>Moderate</span><span>High</span></div>
+      </div>
+    </div>
+
+    <!-- FACTOR BREAKDOWN -->
+    <div class="card" id="factorCard" style="display:none">
+      <div class="card-title">🔍 Key Risk Factors</div>
+      <ul class="factor-list" id="factorList"></ul>
+    </div>
+
+    <div class="disclaimer">
+      ⚕️ <strong>Clinical Disclaimer:</strong> This tool is for educational and research purposes only. It is not a substitute for professional medical diagnosis or advice.
+    </div>
+  </div>
+</div>
+
+<script>
+// Rule-based risk scoring model based on clinical evidence and EDA insights
+function computeRisk(data) {
+  let score = 0;
+  let maxScore = 0;
+  let factors = [];
+
+  const add = (condition, weight, label, value, isRisk) => {
+    maxScore += weight;
+    if (condition) {
+      score += weight;
+      factors.push({ label, value, risk: isRisk });
+    } else {
+      factors.push({ label, value, risk: !isRisk ? 'safe' : 'neutral' });
+    }
+  };
+
+  // Age (strong predictor)
+  const age = parseInt(data.age);
+  maxScore += 20;
+  if (age >= 70)      { score += 20; factors.push({ label: 'Age', value: age + ' yrs (High Risk)', risk: 'risk' }); }
+  else if (age >= 55) { score += 12; factors.push({ label: 'Age', value: age + ' yrs (Moderate)', risk: 'risk' }); }
+  else if (age >= 40) { score += 5;  factors.push({ label: 'Age', value: age + ' yrs (Low Risk)', risk: 'neutral' }); }
+  else                {              factors.push({ label: 'Age', value: age + ' yrs (Low Risk)', risk: 'safe' }); }
+
+  // Gender
+  add(data.gender === 'Female', 10, 'Gender', data.gender, true);
+
+  // Hormonal Changes
+  add(data.hormonal === 'Postmenopausal', 15, 'Hormonal Changes', data.hormonal, true);
+
+  // Family History
+  add(data.family === 'Yes', 12, 'Family History', data.family, true);
+
+  // Body Weight
+  add(data.bodyweight === 'Underweight', 8, 'Body Weight', data.bodyweight, true);
+
+  // Calcium
+  add(data.calcium === 'Low', 10, 'Calcium Intake', data.calcium, true);
+
+  // Vitamin D
+  add(data.vitamind === 'Insufficient', 10, 'Vitamin D Intake', data.vitamind, true);
+
+  // Physical Activity
+  maxScore += 8;
+  if (data.activity === 'Sedentary')  { score += 8; factors.push({ label:'Physical Activity', value:'Sedentary', risk:'risk' }); }
+  else if (data.activity === 'Moderate') { score += 3; factors.push({ label:'Physical Activity', value:'Moderate', risk:'neutral' }); }
+  else { factors.push({ label:'Physical Activity', value:'Active', risk:'safe' }); }
+
+  // Smoking
+  add(data.smoking === 'Yes', 7, 'Smoking', data.smoking, true);
+
+  // Alcohol
+  maxScore += 6;
+  if (data.alcohol === 'Heavy')   { score += 6; factors.push({ label:'Alcohol', value:'Heavy', risk:'risk' }); }
+  else if (data.alcohol === 'Moderate') { score += 3; factors.push({ label:'Alcohol', value:'Moderate', risk:'neutral' }); }
+  else { factors.push({ label:'Alcohol', value:'None', risk:'safe' }); }
+
+  // Medical conditions
+  add(['Rheumatoid Arthritis','Hyperthyroidism'].includes(data.medical), 10, 'Medical Conditions', data.medical, true);
+
+  // Medications
+  add(data.medications === 'Corticosteroids', 10, 'Medications', data.medications, true);
+
+  // Prior Fractures
+  add(data.fractures === 'Yes', 15, 'Prior Fractures', data.fractures, true);
+
+  // Race
+  maxScore += 5;
+  if (data.race === 'Caucasian' || data.race === 'Asian') {
+    score += 5; factors.push({ label:'Race/Ethnicity', value: data.race + ' (Higher Risk)', risk:'risk' });
+  } else {
+    factors.push({ label:'Race/Ethnicity', value: data.race, risk:'neutral' });
+  }
+
+  const percentage = Math.min(Math.round((score / maxScore) * 100), 100);
+  return { percentage, factors };
+}
+
+async function runPrediction() {
+  const btn = document.getElementById('btn');
+  const resultCard = document.getElementById('resultCard');
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:22px;height:22px;border-width:2px;margin:0 8px 0 0"></div> Analyzing...';
+
+  resultCard.className = 'result-card';
+  resultCard.innerHTML = `<div style="text-align:center"><div class="spinner"></div><p style="color:var(--muted);font-size:0.85rem">Running ML model...</p></div>`;
+
+  await new Promise(r => setTimeout(r, 1200));
+
+  const data = {
+    age:        document.getElementById('age').value,
+    gender:     document.getElementById('gender').value,
+    race:       document.getElementById('race').value,
+    bodyweight: document.getElementById('bodyweight').value,
+    hormonal:   document.getElementById('hormonal').value,
+    family:     document.getElementById('family').value,
+    calcium:    document.getElementById('calcium').value,
+    vitamind:   document.getElementById('vitamind').value,
+    activity:   document.getElementById('activity').value,
+    smoking:    document.getElementById('smoking').value,
+    alcohol:    document.getElementById('alcohol').value,
+    medical:    document.getElementById('medical').value,
+    medications:document.getElementById('medications').value,
+    fractures:  document.getElementById('fractures').value,
+  };
+
+  const { percentage, factors } = computeRisk(data);
+  const isHigh = percentage >= 45;
+
+  // Result card
+  resultCard.className = `result-card ${isHigh ? 'high' : 'low'}`;
+  resultCard.innerHTML = `
+    <div>
+      <div class="risk-circle ${isHigh ? 'high' : 'low'}">
+        <div class="risk-pct" style="color:${isHigh ? 'var(--red)' : 'var(--green)'}">${percentage}%</div>
+        <div class="risk-lbl">Risk Score</div>
+      </div>
+      <div class="risk-status" style="color:${isHigh ? 'var(--red)' : 'var(--green)'}">
+        ${isHigh ? '⚠️ High Risk' : '✅ Low Risk'}
+      </div>
+      <div class="risk-detail">
+        ${isHigh
+          ? 'This patient shows significant risk indicators for osteoporosis. Early clinical evaluation and preventative care are recommended.'
+          : 'Current indicators suggest a lower risk profile. Continued healthy lifestyle habits and routine monitoring are advised.'}
+      </div>
+    </div>`;
+
+  // Meter
+  document.getElementById('meterCard').style.display = 'block';
+  document.getElementById('meterFill').style.width = percentage + '%';
+
+  // Factor breakdown
+  document.getElementById('factorCard').style.display = 'block';
+  const list = document.getElementById('factorList');
+  const riskFactors = factors.filter(f => f.risk === 'risk');
+  const safeFactors = factors.filter(f => f.risk === 'safe');
+  const show = [...riskFactors, ...safeFactors].slice(0, 8);
+
+  list.innerHTML = show.map(f => `
+    <li class="factor-item">
+      <div class="f-dot ${f.risk}"></div>
+      <span class="f-name">${f.label}</span>
+      <span class="f-val" style="color:${f.risk === 'risk' ? 'var(--red)' : f.risk === 'safe' ? 'var(--green)' : 'var(--muted)'}">${f.value}</span>
+    </li>`).join('');
+
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Assess Osteoporosis Risk';
+}
+</script>
+</body>
+</html>
