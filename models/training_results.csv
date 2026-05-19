@@ -1,0 +1,5 @@
+Model,Best CV F1,Test Accuracy,Best Params
+Decision Tree,0.9068,0.8776,"{'criterion': 'gini', 'max_depth': 7, 'min_samples_leaf': 1, 'min_samples_split': 10}"
+Random Forest,0.8456,0.8342,"{'max_depth': 10, 'max_features': 'sqrt', 'min_samples_split': 5, 'n_estimators': 100}"
+Logistic Regression,0.8316,0.8291,"{'C': 0.1, 'penalty': 'l2', 'solver': 'liblinear'}"
+SVC,0.8261,0.824,"{'C': 1, 'gamma': 'scale', 'kernel': 'rbf'}"

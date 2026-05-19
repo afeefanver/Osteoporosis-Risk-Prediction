@@ -1,0 +1,5 @@
+Model,CV F1,Test Acc,Test F1
+Decision Tree,0.9056,0.8724,0.858
+Random Forest,0.8416,0.8444,0.819
+Logistic Regression,0.8316,0.8291,0.7988
+SVC,0.8259,0.824,0.7864
